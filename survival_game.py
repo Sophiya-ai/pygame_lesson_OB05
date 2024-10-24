@@ -5,8 +5,9 @@ import config as conf
 
 class Player:
     #инициализация места игрока, координаты целочисленным делением прописаны
-    def __init__(self):
+    def __init__(self, lifes):
         self.rect = pg.Rect(conf.WIDTH//2,conf.HEIGHT//2,conf.PLAYER_SIZE,conf.PLAYER_SIZE)
+        self.lifes = lifes
 
     #функция движения игрока по считанному событию нажатия стрелок
     def move(self,dx,dy):
@@ -15,11 +16,11 @@ class Player:
         #ограничиваем движение рамками экрана
         if self.rect.x > conf.WIDTH - conf.PLAYER_SIZE:
             self.rect.x = conf.WIDTH - conf.PLAYER_SIZE
-        if self.rect.x == 0:
+        if self.rect.x < 0:
             self.rect.x = 0
         if self.rect.y > conf.HEIGHT - conf.PLAYER_SIZE:
             self.rect.y = conf.HEIGHT - conf.PLAYER_SIZE
-        if self.rect.y == 0:
+        if self.rect.y < 0:
             self.rect.y = 0
 
     #отрисовка игрока
@@ -46,6 +47,7 @@ def collision():
             return True
     return False
 
+
 pg.init()
 screen = pg.display.set_mode((conf.WIDTH, conf.HEIGHT))
 pg.display.set_caption("Игра на выживание")
@@ -56,16 +58,14 @@ clock = pg.time.Clock() #создаем объект типа "время" вы�
 pg.font.init()
 font = pg.font.SysFont(conf.type,conf.size) #создание объекта шрифта с заданным типом и размером
 
-player = Player()
+player = Player(conf.PLAYER_LIFES)
 enemies = []
 emerge_enemy_event = pg.USEREVENT + 1
 pg.time.set_timer(emerge_enemy_event, conf.ENEMY_EMERGE_GAP) #установили таймер для создания события
                                                             # emerge_enemy_event через заданный интервал
-i = 0
 running = True
 while running:
     screen.fill(conf.SCREEN_COLOR)
-
 
     #обработка событий: нажатия крестика и пользовательского события нажатия клавиш
     for event in pg.event.get():
@@ -90,17 +90,16 @@ while running:
     player.move(dx, dy)
 
     # запускаем функцию проверки столкновений (не более заданного в config числа жизней)
+    if collision():
+        player.lifes -= 1
+        print(player.lifes)
+        
 
-    while i <= conf.PLAYER_LIFES:
-        if collision():
-            i +=1
-
-    if i > conf.PLAYER_LIFES:
+    if player.lifes == 0:
         screen.fill(conf.SCREEN_COLOR)    #очищаем экран, залив его цветом
         text = font.render("Вы потратили все жизни! Игра окончена!", True, conf.color)
         text_rect = text.get_rect(center = (400,300))
         screen.blit(text,text_rect) #отрисовка текста на экране
-        pg.time.wait(10000) #задерживаем выход на 2 секунды
         running = False
 
     # запускаем функции отрисовки draw из класов игрока и врагов
@@ -111,6 +110,13 @@ while running:
     #обновляем экран
     pg.display.flip()
     clock.tick(conf.FPS)
+
+#Ожидание закрытия окна
+waiting_for_close = True
+while waiting_for_close:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            waiting_for_close = False
 
 pg.quit()
 
