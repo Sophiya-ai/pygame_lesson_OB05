@@ -14,6 +14,7 @@ PLAYER_LIFES = 5
 ENEMY_SIZE = 20
 ENEMY_EMERGE_GAP = 1000
 ENEMY_COLOR = "brown1"
+ENEMY_COLOR_HIT = "aliceblue"
 
 #шрифт
 type = "Arial"
