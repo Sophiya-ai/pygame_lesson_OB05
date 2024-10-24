@@ -13,8 +13,14 @@ class Player:
         self.rect.x += dx
         self.rect.y += dy
         #ограничиваем движение рамками экрана
-        self.rect.x = max(0,min(conf.WIDTH - conf.PLAYER_SIZE,self.rect.x))
-        self.rect.y = max(0,min(conf.HEIGHT - conf.PLAYER_SIZE,self.rect.x))
+        if self.rect.x > conf.WIDTH - conf.PLAYER_SIZE:
+            self.rect.x = conf.WIDTH - conf.PLAYER_SIZE
+        if self.rect.x == 0:
+            self.rect.x = 0
+        if self.rect.y > conf.HEIGHT - conf.PLAYER_SIZE:
+            self.rect.y = conf.HEIGHT - conf.PLAYER_SIZE
+        if self.rect.y == 0:
+            self.rect.y = 0
 
     #отрисовка игрока
     def draw(self,screen):
@@ -35,11 +41,10 @@ def emerge_enemies():
 
 #проверяем столкновение (изображений) и считаем их
 def collision():
-    i = 0
     for e in enemies:
         if player.rect.colliderect(e.rect):
-            i += 1
-    return i
+            return True
+    return False
 
 pg.init()
 screen = pg.display.set_mode((conf.WIDTH, conf.HEIGHT))
@@ -56,10 +61,11 @@ enemies = []
 emerge_enemy_event = pg.USEREVENT + 1
 pg.time.set_timer(emerge_enemy_event, conf.ENEMY_EMERGE_GAP) #установили таймер для создания события
                                                             # emerge_enemy_event через заданный интервал
-
+i = 0
 running = True
 while running:
     screen.fill(conf.SCREEN_COLOR)
+
 
     #обработка событий: нажатия крестика и пользовательского события нажатия клавиш
     for event in pg.event.get():
@@ -78,19 +84,23 @@ while running:
     if keys[pg.K_UP]:
         dy -= conf.PLAYER_SPEED
     if keys[pg.K_DOWN]:
-        dx = conf.PLAYER_SPEED
+        dy = conf.PLAYER_SPEED
 
     #запускаем функцию движения из класса Игрок
     player.move(dx, dy)
 
     # запускаем функцию проверки столкновений (не более заданного в config числа жизней)
-    check_collision = collision()
-    if check_collision > conf.PLAYER_LIFES:
+
+    while i <= conf.PLAYER_LIFES:
+        if collision():
+            i +=1
+
+    if i > conf.PLAYER_LIFES:
         screen.fill(conf.SCREEN_COLOR)    #очищаем экран, залив его цветом
         text = font.render("Вы потратили все жизни! Игра окончена!", True, conf.color)
         text_rect = text.get_rect(center = (400,300))
         screen.blit(text,text_rect) #отрисовка текста на экране
-        pg.time.wait(4000) #задерживаем выход на 2 секунды
+        pg.time.wait(10000) #задерживаем выход на 2 секунды
         running = False
 
     # запускаем функции отрисовки draw из класов игрока и врагов
